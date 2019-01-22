@@ -1,0 +1,43 @@
+{
+  "name": "freecodecamp-ssr",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "build-prod": "tsc",
+    "dev": "nodemon ./src/server.ts",
+    "test": "jest --watch",
+    "start": "ts-node ./src/server.ts",
+    "deploy": "npm run build && npm run start"
+  },
+  "author": "Quyen Ho",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/thquyen11/freecodecamp-ssr/issues"
+  },
+  "homepage": "https://github.com/thquyen11/freecodecamp-ssr#readme",
+  "dependencies": {
+    "@types/body-parser": "^1.17.0",
+    "@types/cors": "^2.8.4",
+    "@types/express": "^4.16.0",
+    "@types/helmet": "0.0.42",
+    "@types/passport": "^1.0.0",
+    "@types/passport-facebook": "^2.1.8",
+    "@types/pug": "^2.0.4",
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "helmet": "^3.15.0",
+    "passport": "^0.4.0",
+    "passport-facebook": "^2.1.1",
+    "pug": "^2.0.3",
+    "typescript": "^3.2.4"
+  },
+  "devDependencies": {
+    "@types/winston": "^2.4.4",
+    "dotenv": "^6.2.0",
+    "nodemon": "^1.18.9",
+    "ts-node": "^7.0.1",
+    "winston": "^3.1.0"
+  }
+}
