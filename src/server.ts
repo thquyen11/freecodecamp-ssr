@@ -134,6 +134,40 @@ app.get('/sucess', (req: Request, res: Response) => {
     res.render('pugs/success.pug');
 })
 
+// FCC projects: Metric-Imperial converter
+app.get('/api/convert', (req: Request, res: Response) => {
+    const input = req.query.input;
+    const reVerify = /(?<=\d)\w+|\d(?=\w)/i;
+    if (!input.match(reVerify)) {
+        res.status(400).send('invalid input');
+    }
+
+    const reUnit = /\w+/i;
+    const index: number = input.search(reUnit);
+    console.log('index ', index);
+    let unit: string = input.slice(index);
+    let number: number = eval(input.slice(0, index));
+    console.log('unit ', unit);
+    console.log('number ', number);
+
+    switch (unit) {
+        case 'gal':
+            number *= 3.78541;
+            unit = 'L';
+            break;
+        case 'lbs':
+            number *= 0.453592;
+            unit = 'kg';
+            break;
+        case 'mi':
+            number *= 1.60934;
+            unit = 'km';
+            break;
+    }
+
+    return res.status(200).json({ convertNum: number, convertUnit: unit })
+})
+
 // FCC projects: Stock Price Checker
 let dbStock = [
     {
