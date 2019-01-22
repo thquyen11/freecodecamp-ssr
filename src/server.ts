@@ -134,6 +134,46 @@ app.get('/sucess', (req: Request, res: Response) => {
     res.render('pugs/success.pug');
 })
 
+// FCC projects: Stock Price Checker
+let dbStock = [
+    {
+        stock: 'GOOG',
+        price: '786.90'
+    },
+    {
+        stock: 'MSFT',
+        price: '62.30'
+    },
+
+];
+
+app.get('/api/stock-prices', (req: Request, res: Response) => {
+    const stocks = req.query.stock;
+    console.log('query ', req.query);
+    console.log('stocks ', stocks);
+    const stockList = [];
+
+    if (typeof stocks === 'string') {
+        console.log('stock ', stocks);
+        dbStock.map((stockInDB: any) => {
+            if (stockInDB.stock === stocks.toUpperCase()) {
+                stockList.push(stocks);
+            }
+        })
+    } else {
+        stocks.map((stock: any, index: any) => {
+            console.log('stock ', stock);
+            console.log(typeof stock);
+            dbStock.map((stockInDB: any) => {
+                if (stockInDB.stock === stock.toUpperCase()) {
+                    stockList.push(stock);
+                }
+            })
+        })
+    }
+    return res.status(200).json({ stockData: stockList });
+})
+
 // FCC projects: Personal Library
 let dbBooks = [
     {
