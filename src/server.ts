@@ -8,8 +8,60 @@ import * as passport from 'passport';
 require("dotenv").config();
 
 const app = express();
-// app.use('/auth', auth);
 app.set('viewengine', 'pug');
+
+// add winston to write log
+export const logger: any = winston.createLogger({
+    level: "info",
+    format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.json()
+    ),
+    transports: [
+        new winston.transports.File({
+            filename: `/logs/combined.log`,
+            level: "info"
+        })
+    ],
+    exitOnError: true,
+    silent: false
+});
+
+if (process.env.NODE_ENV !== "production") {
+    logger.add(
+        new winston.transports.Console({
+            format: winston.format.simple()
+        })
+    );
+}
+
+app.use(
+    helmet({
+        frameguard: {
+            action: "sameorigin"
+        },
+        dnsPrefetchControl: {
+            allow: true
+        }
+    })
+);
+
+// const whitelist: string[] = [
+//     'http://localhost:3000',
+// ];
+// const corsOptions = {
+//     origin: (origin, callback) => {
+//         if (whitelist.indexOf(origin) !== -1) {
+//             callback(null, true);
+//         } else {
+//             callback(new Error('Not allowed by CORS'));
+//         }
+//     }
+// }
+// app.use(cors(corsOptions));
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.text());
 
 const db = {
     User: [
@@ -65,7 +117,6 @@ passport.deserializeUser(function (user, done) {
 //     /auth/facebook/callback
 app.get('/auth/facebook', passport.authenticate('facebook'));
 
-
 // Facebook will redirect the user to this URL after approval.  Finish the
 // authentication process by attempting to obtain an access token.  If
 // access was granted, the user will be logged in.  Otherwise,
@@ -83,83 +134,93 @@ app.get('/sucess', (req: Request, res: Response) => {
     res.render('pugs/success.pug');
 })
 
-// add winston to write log
-export const logger: any = winston.createLogger({
-    level: "info",
-    format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.File({
-            filename: `/logs/combined.log`,
-            level: "info"
-        })
-    ],
-    exitOnError: true,
-    silent: false
-});
-
-if (process.env.NODE_ENV !== "production") {
-    logger.add(
-        new winston.transports.Console({
-            format: winston.format.simple()
-        })
-    );
-}
-
-app.use(
-    helmet({
-        frameguard: {
-            action: "sameorigin"
-        },
-        dnsPrefetchControl: {
-            allow: true
-        }
-    })
-);
-
-// const whitelist: string[] = [
-//     'http://localhost:3000',
-// ];
-// const corsOptions = {
-//     origin: (origin, callback) => {
-//         if (whitelist.indexOf(origin) !== -1) {
-//             callback(null, true);
-//         } else {
-//             callback(new Error('Not allowed by CORS'));
-//         }
-//     }
-// }
-// app.use(cors(corsOptions));
-app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.text());
-
 // FCC projects: Personal Library
+let dbBooks = [
+    {
+        id: '0',
+        title: 'test book',
+        commentCount: 10
+    }
+]
 
+app.delete('/api/books', (req: Request, res: Response) => {
+    dbBooks = [];
+    return res.status(200).send('all book deleted');
+})
+
+app.delete('/api/books/:id', (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    for (let i: number = 0; i < dbBooks.length; i++) {
+        if (dbBooks[i].id === id) {
+            dbBooks.splice(i, 1);
+            return res.status(200).send(`book id ${id} deleted`);
+        }
+    }
+    return res.status(400).send(`book id ${id} not existed`);
+})
+
+app.post('/api/books', (req: Request, res: Response) => {
+    const { title, comment } = req.body;
+
+    dbBooks.map((book: any, index: any) => {
+        if (title === book.title) return res.status(400).json({ title: title, post: 'false' })
+    })
+
+    dbBooks.push({
+        id: dbBooks.length.toString(),
+        title: title,
+        commentCount: 0
+    })
+    return res.status(200).json({ title: title, post: 'success' })
+})
+
+app.post('/api/books/:id', (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { title, comment } = req.body;
+
+    dbBooks.map((book: any, index: any) => {
+        if (id === book.id) {
+            book.commentCount++;
+            return res.status(200).send(`add comment to book id ${id}`);
+        } else return res.status(400).send(`book id ${id} not found`);
+    })
+})
+
+app.get('/api/books', (req: Request, res: Response) => {
+    return res.status(200).json({ bookList: dbBooks });
+})
+
+app.get('/api/books/:id', (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    dbBooks.map((book: any, index: any) => {
+        if (id === book.id) return res.status(200).json({ book: book });
+    })
+    return res.status(400).send(`book id ${id} not found`);
+})
 
 // FCC project: Issue Trackers
-const dbIssues=[
+const dbIssues = [
     {
         projectName: 'TEST',
         issueId: 0,
         issueTitle: 'test',
-        issueText:'test',
-        createdBy:'QuyenHo',
-        assignedTo:'',
-        statusText:'',
+        issueText: 'test',
+        createdBy: 'QuyenHo',
+        assignedTo: '',
+        statusText: '',
         createdOn: new Date('20190121'),
         updatedOn: new Date('20190122'),
         open: true
     },
 ]
 
-app.get('/api/issues/:projectName', (req:Request, res:Response)=>{
-    const { projectName } =req.params;
-    const issueList=[];
-    dbIssues.map((issue:any, index:any)=>{
-        if(issue.projectName===projectName) issueList.push(issue);
+app.get('/api/issues/:projectName', (req: Request, res: Response) => {
+    const { projectName } = req.params;
+    const issueList = [];
+    dbIssues.map((issue: any, index: any) => {
+        if (issue.projectName === projectName) issueList.push(issue);
     })
 
     return res.status(200).json({
@@ -168,14 +229,14 @@ app.get('/api/issues/:projectName', (req:Request, res:Response)=>{
     })
 })
 
-app.delete('/api/issues/:projectName', (req:Request, res:Response)=>{
-    const { projectName }= req.params;
+app.delete('/api/issues/:projectName', (req: Request, res: Response) => {
+    const { projectName } = req.params;
     const { id } = req.body;
-    
-    if(!id) res.status(400).json({ projectName: projectName, error: '_id error' })
-    for(let i=0; i<dbIssues.length; i++){
-        if(dbIssues[i].projectName===projectName && dbIssues[i].issueId=== id){
-            dbIssues.splice(i,1)
+
+    if (!id) res.status(400).json({ projectName: projectName, error: '_id error' })
+    for (let i = 0; i < dbIssues.length; i++) {
+        if (dbIssues[i].projectName === projectName && dbIssues[i].issueId === id) {
+            dbIssues.splice(i, 1)
         }
     }
     return res.status(200).json({
@@ -184,14 +245,14 @@ app.delete('/api/issues/:projectName', (req:Request, res:Response)=>{
     })
 })
 
-app.put('/api/issues/:projectName', (req:Request, res:Response)=>{
-    const { projectName }= req.params;
+app.put('/api/issues/:projectName', (req: Request, res: Response) => {
+    const { projectName } = req.params;
     const { id } = req.body;
-    
-    if(!id) res.status(400).json({ projectName: projectName, error: '_id error' })
-    for(let i=0; i<dbIssues.length; i++){
-        if(dbIssues[i].projectName===projectName && dbIssues[i].issueId=== id){
-            dbIssues[i].updatedOn=new Date();
+
+    if (!id) res.status(400).json({ projectName: projectName, error: '_id error' })
+    for (let i = 0; i < dbIssues.length; i++) {
+        if (dbIssues[i].projectName === projectName && dbIssues[i].issueId === id) {
+            dbIssues[i].updatedOn = new Date();
         }
     }
 
@@ -201,13 +262,13 @@ app.put('/api/issues/:projectName', (req:Request, res:Response)=>{
     })
 })
 
-app.post('/api/issues/:projectName', (req:Request, res:Response)=>{
+app.post('/api/issues/:projectName', (req: Request, res: Response) => {
     const { projectName } = req.params;
-    const issueTitle:string = req.body.issue_title;
-    const issueText:string = req.body.issue_text;
-    const createdBy:string = req.body.created_by;
-    const assignedTo:string|undefined = req.body.assigned_to;
-    const statusText:string|undefined = req.body.status_text;
+    const issueTitle: string = req.body.issue_title;
+    const issueText: string = req.body.issue_text;
+    const createdBy: string = req.body.created_by;
+    const assignedTo: string | undefined = req.body.assigned_to;
+    const statusText: string | undefined = req.body.status_text;
 
     dbIssues.push({
         projectName: projectName,
@@ -215,18 +276,15 @@ app.post('/api/issues/:projectName', (req:Request, res:Response)=>{
         issueTitle: issueTitle,
         issueText: issueText,
         createdBy: createdBy,
-        assignedTo: assignedTo? assignedTo: '',
-        statusText: statusText? statusText: '',
+        assignedTo: assignedTo ? assignedTo : '',
+        statusText: statusText ? statusText : '',
         createdOn: new Date(),
         updatedOn: new Date(),
         open: true
     })
 
-    res.status(200).json(dbIssues[dbIssues.length-1])
+    res.status(200).json(dbIssues[dbIssues.length - 1])
 })
-
-
-
 
 //Server port
 app.listen(process.env.PORT, () => {
