@@ -5,7 +5,6 @@ import * as cors from 'cors';
 import * as bodyParser from 'body-parser';
 import * as helmet from 'helmet';
 import * as passport from 'passport';
-import { isUser } from 'babel-types';
 require("dotenv").config();
 
 const app = express();
@@ -36,8 +35,8 @@ const handleSignin = (profile: any, db: any) => {
 const FacebookStrategy = require('passport-facebook').Strategy;
 app.use(passport.initialize());
 passport.use(new FacebookStrategy({
-    clientID: '197825031154291',
-    clientSecret: '714f2934fc87986389a0906c3f90970b',
+    clientID: process.env.FACEBOOK_CLIENT_ID,
+    clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
     callbackURL: "http://localhost:3000/auth/facebook/callback"
 },
     function (accessToken, refreshToken, profile, done) {
@@ -137,6 +136,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.text());
 
+// FCC projects: Personal Library
+
+
+// FCC project: Issue Trackers
 const dbIssues=[
     {
         projectName: 'TEST',
