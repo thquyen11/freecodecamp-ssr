@@ -135,34 +135,123 @@ app.get('/sucess', (req: Request, res: Response) => {
 })
 
 // FCC project: Anonymous Message Board
-//data model
-// const messageBoard=[
-//     {
-//         id: 0,
-//         createdOn: new Date(),
-//         bumpedOn: new Date(),
-//         reported: false,
-//         threads:[
-//             {
-//                 id: 0,
-//                 createdOn: new Date(),
-//                 bumpedOn: new Date(),
-//                 reported: false,
-//                 text: 'hello world',
-//                 reply:[
-//                     {
-//                         id: 0,
-//                         createdOn: new Date(),
-//                         bumpedOn: new Date(),
-//                         reported: false,
-//                         text: 'hello world',
-//                     }
+const messageBoard = [
+    {
+        id: '0',
+        createdOn: new Date(),
+        bumpedOn: new Date(),
+        reported: false,
+        threads: [
+            {
+                id: '0',
+                createdOn: new Date(),
+                bumpedOn: new Date(),
+                reported: false,
+                text: 'hello world',
+                reply: [
+                    {
+                        id: '0',
+                        createdOn: new Date(),
+                        bumpedOn: new Date(),
+                        reported: false,
+                        text: 'reply to hello world',
+                    }
+                ]
+            }
+        ]
+    }
+];
 
-//                 ]
-//             }
-//         ]
-//     }
-// ]
+// post new thread to a board
+app.post('/api/threads/:boardId', (req: Request, res: Response) => {
+    const boardId: string = req.params.boardId;
+    const { threadText } = req.body;
+
+    messageBoard[parseInt(boardId, 10)].threads.push({
+        id: messageBoard[parseInt(boardId, 10)].threads.length.toString(),
+        createdOn: new Date(),
+        bumpedOn: new Date(),
+        reported: false,
+        text: threadText,
+        reply: []
+    })
+    return res.redirect(`/b/${boardId}`);
+})
+
+// post reply to a thread
+app.post('/api/replies/:boardId', (req: Request, res: Response) => {
+    const boardId: string = req.params.boardId;
+    const { threadId, replyText } = req.body;
+
+    messageBoard[parseInt(boardId, 10)].threads[parseInt(threadId, 10)].reply.push({
+        id: messageBoard[parseInt(boardId, 10)].threads[parseInt(threadId, 10)].reply.length.toString(),
+        createdOn: new Date(),
+        bumpedOn: new Date(),
+        reported: false,
+        text: replyText,
+    })
+    return res.redirect(`/b/${boardId}/${threadId}`);
+})
+
+// delete thread in a board
+app.delete('/api/threads/:boardId', (req: Request, res: Response) => {
+   try { const boardId: string = req.params.boardId;
+    const { threadId } = req.body;
+
+    messageBoard[parseInt(boardId, 10)].threads.splice(threadId, 1);
+    return res.status(200).end();}
+    catch(e){
+        console.log(e);
+        res.status(400).json({});
+    }
+})
+
+// delete reply in a thread
+app.delete('/api/replies/:boardId', (req: Request, res: Response) => {
+    try{const boardId: string = req.params.boardId;
+    const { threadId, replyId } = req.body;
+
+    messageBoard[parseInt(boardId, 10)].threads[parseInt(threadId, 10)].reply.splice(replyId, 1);
+    return res.status(200).end();}
+    catch(e){
+        console.log(e);
+        res.status(400).json({});
+    }
+})
+
+// get all info of a threads
+app.get('/api/replies/:boardId', (req: Request, res: Response) => {
+    try {
+        const boardId: string = req.params.boardId;
+        const { threadId } = req.query
+
+        return res.status(200).json({ thread: messageBoard[parseInt(boardId, 10)].threads[parseInt(threadId, 10)] });
+    } catch (e) {
+        console.log(e);
+        return res.status(400).json({});
+    }
+})
+
+// get 10 latest threads together with their 3 latest repleis
+app.get('/api/threads/:boardId', (req: Request, res: Response) => {
+    try {
+        const boardId: string = req.params.boardId;
+        if(messageBoard[parseInt(boardId, 10)].threads.length<3) return res.status(200).json({ threads: messageBoard[parseInt(boardId, 10)].threads });
+        
+        let tenLastestThreads: any = messageBoard[parseInt(boardId, 10)].threads.sort((a: any, b: any) => (b.bumpedOn - a.bumpedOn) ? 1 : (a.bumpedOn - b.bumpedOn) ? -1 : 0).splice(0, 10);
+        tenLastestThreads = tenLastestThreads.map((thread: any, index: number) => {
+            const threeLatestReplies: any = thread.reply.sort((a: any, b: any) => (b.bumpedOn - a.bumpedOn) ? 1 : (a.bumpedOn - b.bumpedOn) ? -1 : 0).splice(0, 3);
+            thread.reply = threeLatestReplies;
+            return thread;
+        })
+        return res.status(200).json({ threads: tenLastestThreads });
+    }
+    catch (e) {
+        console.log(e);
+        return res.status(400).end();
+    }
+})
+
 
 // FCC projects: Metric-Imperial converter
 app.get('/api/convert', (req: Request, res: Response) => {
@@ -190,15 +279,15 @@ app.get('/api/convert', (req: Request, res: Response) => {
             unit = 'km';
             break;
         case 'L':
-            number *= 1/3.78541;
+            number *= 1 / 3.78541;
             unit = 'gal';
             break;
         case 'kg':
-            number *= 1/0.453592;
+            number *= 1 / 0.453592;
             unit = 'lbs';
             break;
         case 'km':
-            number *= 1/1.60934;
+            number *= 1 / 1.60934;
             unit = 'mi';
             break;
         default:
