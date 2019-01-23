@@ -134,6 +134,36 @@ app.get('/sucess', (req: Request, res: Response) => {
     res.render('pugs/success.pug');
 })
 
+// FCC project: Anonymous Message Board
+//data model
+// const messageBoard=[
+//     {
+//         id: 0,
+//         createdOn: new Date(),
+//         bumpedOn: new Date(),
+//         reported: false,
+//         threads:[
+//             {
+//                 id: 0,
+//                 createdOn: new Date(),
+//                 bumpedOn: new Date(),
+//                 reported: false,
+//                 text: 'hello world',
+//                 reply:[
+//                     {
+//                         id: 0,
+//                         createdOn: new Date(),
+//                         bumpedOn: new Date(),
+//                         reported: false,
+//                         text: 'hello world',
+//                     }
+
+//                 ]
+//             }
+//         ]
+//     }
+// ]
+
 // FCC projects: Metric-Imperial converter
 app.get('/api/convert', (req: Request, res: Response) => {
     const input = req.query.input;
