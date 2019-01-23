@@ -1,4 +1,5 @@
 import * as express from 'express';
+import * as path from 'path';
 import { Request, Response } from "express";
 import * as winston from "winston";
 import * as cors from 'cors';
@@ -6,9 +7,10 @@ import * as bodyParser from 'body-parser';
 import * as helmet from 'helmet';
 import * as passport from 'passport';
 require("dotenv").config();
+const socket = require('socket.io');
 
 const app = express();
-app.set('viewengine', 'pug');
+// app.set('viewengine', 'pug');
 
 // add winston to write log
 export const logger: any = winston.createLogger({
@@ -126,13 +128,37 @@ app.get('/auth/facebook/callback', passport.authenticate('facebook', {
     failureRedirect: '/login'
 }));
 
-app.get('/', (req: Request, res: Response) => {
-    res.render('pugs/index.pug');
-})
+// app.get('/', (req: Request, res: Response) => {
+//     res.render('pugs/index.pug');
+// })
 
 app.get('/sucess', (req: Request, res: Response) => {
     res.render('pugs/success.pug');
 })
+
+//Server port
+const server=app.listen(process.env.PORT, () => {
+    logger.info("Server running on port " + process.env.PORT);
+});
+
+// Chat app using socket.io
+app.use('/public', express.static('public'));
+// app.use('/static', express.static(path.join(__dirname,'public')));
+
+// Socket setup
+const io = socket(server);
+io.on('connection', (socket:any)=>{
+    console.log('made socket connection: ', socket.id);
+
+    socket.on('chat', (data:any)=>{
+        io.sockets.emit('chat', data);
+    })
+
+    socket.on('typing', (data:any)=>{
+        socket.broadcast.emit('typing', data)
+    })
+})
+
 
 // FCC project: Anonymous Message Board
 const messageBoard = [
@@ -489,7 +515,4 @@ app.post('/api/issues/:projectName', (req: Request, res: Response) => {
     res.status(200).json(dbIssues[dbIssues.length - 1])
 })
 
-//Server port
-app.listen(process.env.PORT, () => {
-    logger.info("Server running on port " + process.env.PORT);
-});
+
