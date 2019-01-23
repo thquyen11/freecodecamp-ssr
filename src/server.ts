@@ -141,14 +141,10 @@ app.get('/api/convert', (req: Request, res: Response) => {
     if (!input.match(reVerify)) {
         res.status(400).send('invalid input');
     }
-
-    const reUnit = /\w+/i;
+    const reUnit = /[a-zA-Z]+/;
     const index: number = input.search(reUnit);
-    console.log('index ', index);
     let unit: string = input.slice(index);
     let number: number = eval(input.slice(0, index));
-    console.log('unit ', unit);
-    console.log('number ', number);
 
     switch (unit) {
         case 'gal':
@@ -162,6 +158,20 @@ app.get('/api/convert', (req: Request, res: Response) => {
         case 'mi':
             number *= 1.60934;
             unit = 'km';
+            break;
+        case 'L':
+            number *= 1/3.78541;
+            unit = 'gal';
+            break;
+        case 'kg':
+            number *= 1/0.453592;
+            unit = 'lbs';
+            break;
+        case 'km':
+            number *= 1/1.60934;
+            unit = 'mi';
+            break;
+        default:
             break;
     }
 
